@@ -17,4 +17,14 @@ export default class ioController {
         );
     }
 
+    public static callbackSend(callback:Function, data:any) {
+        callback(
+            {
+                status: "success",
+                statusCode: 200,
+                data: data
+            }
+        );
+    }
+
 }
