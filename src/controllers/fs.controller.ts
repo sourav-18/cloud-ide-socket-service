@@ -81,14 +81,24 @@ class fsController {
 
     public async newFileCreate(dirPath: string, fileName: string) {
         try {
-            const fullPath=dirPath+fileName;
-            const isAlreadyExist=await FS.promises.access("fullPath");
-            console.log(isAlreadyExist)
-            await FS.promises.writeFile(fullPath,"");
+            const fullPath = PATH.join(dirPath, fileName)
+            if (!FS.existsSync(dirPath) || FS.existsSync(fullPath)) return false;
+            await FS.promises.writeFile(fullPath, "");
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    public async newDirCreate(dirPath: string, dirName: string) {
+        try {
+            const fullPath = PATH.join(dirPath, dirName)
+            if (!FS.existsSync(dirPath) || FS.existsSync(fullPath)) return false;
+            await FS.promises.mkdir(fullPath);
             return true;
         } catch (error) {
             console.log(error)
-            return null;
+            return false;
         }
     }
 

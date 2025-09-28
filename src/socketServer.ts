@@ -24,7 +24,7 @@ export default class SocketServer {
 
     private connectionHandler() {
         this.io.on('connection', async (socket) => {
-            console.log('a user connected');
+            console.log('a user connected ', socket.id);
 
             // await S3Controller.downloadS3Folder();
             this.ioHandler(socket);
@@ -41,10 +41,15 @@ export default class SocketServer {
         });
 
         const workspacePrefix = constantUtils.key.userCodeFilePrefix;
-        ioController.emitToUser(socket.id, socketUtils.emit.initialDirPath, {
-            dirPath: workspacePrefix,
-            filePath: "/workspaces/index.js"
-        });
+
+        setTimeout(() => {
+            ioController.emitToUser(socket.id, socketUtils.emit.initialDirPath, {
+                dirPath: workspacePrefix,
+                filePath: "/workspaces/index.js"
+            });
+        }, 10)
+
+
 
 
         socket.on(socketUtils.on.fileContent, async (data) => {
@@ -54,6 +59,9 @@ export default class SocketServer {
         })
 
         socket.on(socketUtils.on.dirBaseFile, async (data, callback) => {
+            if (typeof callback !== "function") {
+                return;
+            }
             const dirPath = data.dirPath;
             const baseFiles = await fsController.getBaseFileAndDir(constantUtils.key.getFullPath(dirPath));
             ioController.callbackSend(callback, {
@@ -64,17 +72,41 @@ export default class SocketServer {
 
         socket.on(socketUtils.on.fileContentSync, async (data) => {
             const filePath = constantUtils.key.getFullPath(data.filePath);
-            console.log(data.changes)
             for (let change of data.changes) {
                 await fsController.fileContentSync(filePath, change)
             }
         })
 
-        socket.on(socketUtils.on.newFileCreate, async (data) => {
+        socket.on(socketUtils.on.newFileCreate, async (data, callback) => {
+            if (typeof callback !== "function") {
+                return;
+            }
             const dirFullPath = constantUtils.key.getFullPath(data.dirPath);
-            const response = await fsController.newFileCreate(dirFullPath, data.fileName);
-            console.log(response)
+            let response: boolean | Object = await fsController.newFileCreate(dirFullPath, data.fileName);
+            if (response) {
+                response = {
+                    name: data.fileName,
+                    path: data.dirPath + "/" + data.fileName,
+                    type: "file"
+                }
+            }
+            ioController.callbackSend(callback, response);
+        })
 
+        socket.on(socketUtils.on.newDirCreate, async (data,callback) => {
+            if (typeof callback !== "function") {
+                return;
+            }
+            const dirFullPath = constantUtils.key.getFullPath(data.dirPath);
+            let response: boolean | Object = await fsController.newDirCreate(dirFullPath, data.dirName);
+            if (response) {
+                response = {
+                    name: data.dirName,
+                    path: data.dirPath + "/" + data.dirName,
+                    type: "dir"
+                }
+            }
+            ioController.callbackSend(callback, response);
         })
     }
 
