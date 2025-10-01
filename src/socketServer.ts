@@ -44,8 +44,13 @@ export default class SocketServer {
 
         setTimeout(() => {
             ioController.emitToUser(socket.id, socketUtils.emit.initialDirPath, {
-                dirPath: workspacePrefix,
-                filePath: "/workspaces/index.js"
+                filePath: "/workspaces/index.js",
+                dirPath:workspacePrefix,
+                rootDirData: {
+                    name: "workspaces",
+                    path: workspacePrefix,
+                    type: "dir"
+                }
             });
         }, 10)
 
@@ -93,7 +98,7 @@ export default class SocketServer {
             ioController.callbackSend(callback, response);
         })
 
-        socket.on(socketUtils.on.newDirCreate, async (data,callback) => {
+        socket.on(socketUtils.on.newDirCreate, async (data, callback) => {
             if (typeof callback !== "function") {
                 return;
             }
