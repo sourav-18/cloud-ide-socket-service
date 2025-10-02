@@ -5,9 +5,10 @@ import S3Controller from "./controllers/s3.controller";
 import constantUtils from "./utils/constant.utils";
 import fsController from "./controllers/fs.controller";
 import ioController from "./controllers/io.controller";
+import terminalController from "./controllers/terminal.controller";
 
 export default class SocketServer {
-    private static instance: SocketServer;
+    private terminals: { [terminalId: string]: { terminalObj: terminalController } } = {};
     private io: Server;
 
 
@@ -29,11 +30,14 @@ export default class SocketServer {
             // await S3Controller.downloadS3Folder();
             this.ioHandler(socket);
             socket.on('disconnect', () => {
-                console.log('user disconnected');
+                this.clearTerminals();
+                console.log('user disconnected ', socket.id);
             });
         });
 
     }
+
+
 
     private ioHandler(socket: Socket) {
         socket.on(socketUtils.on.ping, () => {
@@ -45,7 +49,7 @@ export default class SocketServer {
         setTimeout(() => {
             ioController.emitToUser(socket.id, socketUtils.emit.initialDirPath, {
                 filePath: "/workspaces/index.js",
-                dirPath:workspacePrefix,
+                dirPath: workspacePrefix,
                 rootDirData: {
                     name: "workspaces",
                     path: workspacePrefix,
@@ -112,6 +116,28 @@ export default class SocketServer {
                 }
             }
             ioController.callbackSend(callback, response);
+        })
+
+        //terminal
+
+        socket.on(socketUtils.on.terminalRequest, (data, callback) => {
+            const terminalObj = new terminalController(socket.id);
+            const session = terminalObj.getSession();
+            this.terminals[session.terminalId] = { terminalObj: terminalObj };
+            ioController.callbackSend(callback, { terminalId: session.terminalId });
+        })
+
+        socket.on(socketUtils.on.terminalWrite, (data) => {
+            this.terminals[data.terminalId]?.terminalObj.writeData(data.data)
+        })
+
+
+    }
+
+    private clearTerminals() {
+        Object.keys(this.terminals).forEach(terminalId => {
+            this.terminals[terminalId].terminalObj.kill();
+            delete this.terminals[terminalId];
         })
     }
 
