@@ -3,8 +3,8 @@ import serverEnv from "./config/serverEnv.config";
 import express, { Request, Response, NextFunction } from "express";
 import { Server } from 'socket.io';
 import SocketServer from "./socketServer";
-import FileWatchController from './controllers/FileWatch.controller';
-FileWatchController.getInstance();
+import redisConnection from './db/redis/connection.db';
+redisConnection.getInstance();
 
 
 

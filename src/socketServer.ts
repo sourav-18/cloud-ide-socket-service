@@ -7,6 +7,11 @@ import fsController from "./controllers/fs.controller";
 import ioController from "./controllers/io.controller";
 import terminalController from "./controllers/terminal.controller";
 import serverEnv from "./config/serverEnv.config";
+import FileWatchController from './controllers/FileWatch.controller';
+import redisFun from "./db/redis/fun.db";
+import redisKeys from "./db/redis/key.db";
+
+
 
 export default class SocketServer {
     private terminals: { [terminalId: string]: { terminalObj: terminalController } } = {};
@@ -27,8 +32,12 @@ export default class SocketServer {
     private connectionHandler() {
         this.io.on('connection', async (socket) => {
             console.log('a user connected ', socket.id);
-
-            await S3Controller.downloadS3Folder();
+            const isUserFileExist = await redisFun.get(redisKeys.key.isUserFileExist);
+            if (!isUserFileExist) {
+                await S3Controller.downloadS3Folder();
+                await redisFun.set(redisKeys.key.isUserFileExist, "true");//todo whenever server disconnect key delete or redis destroy
+            }
+            FileWatchController.getInstance();
             this.ioHandler(socket);
             socket.on('disconnect', () => {
                 this.clearTerminals();
@@ -44,7 +53,7 @@ export default class SocketServer {
         socket.on(socketUtils.on.ping, () => {
             socket.emit(socketUtils.emit.pong, 'pong');
         });
-        
+
         ioController.emitToUser(socket.id, socketUtils.emit.initialFileLoadComplete, true);
 
 
@@ -125,7 +134,6 @@ export default class SocketServer {
         //terminal
 
         socket.on(socketUtils.on.terminalRequest, (data, callback) => {
-            console.log("terminal request sent form front end");
             const terminalObj = new terminalController(socket.id);
             const session = terminalObj.getSession();
             this.terminals[session.terminalId] = { terminalObj: terminalObj };

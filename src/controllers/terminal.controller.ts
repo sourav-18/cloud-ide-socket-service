@@ -19,7 +19,7 @@ class terminalController {
                 cols: 100,
                 name: "xterm-color",
                 cwd: constantUtils.key.userLocalWorkspacePath,
-                env: process.env
+                env: process.env,
             }
         );
     }

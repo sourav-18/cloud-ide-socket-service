@@ -10,6 +10,9 @@ const serverEnv = {
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
     S3_USER_FOLDER: process.env.S3_USER_FOLDER,
+
+    //db
+    REDIS_URL:process.env.REDIS_URL
 };
 
 export default serverEnv;
