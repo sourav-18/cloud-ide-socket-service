@@ -71,6 +71,24 @@ class S3Controller {
         await FS.promises.writeFile(filePath, fileData);
     }
 
+    public uploadFile(localFilePath: string, fileS3Path: string) {
+        const fileContent = FS.createReadStream(localFilePath);
+        const params = {
+            Bucket: serverEnv.S3_BUCKET_NAME!,
+            Key: fileS3Path, // File name you want to save as in S3
+            Body: fileContent
+        };
+
+        this.S3.putObject(params, (err, data) => {
+            if (err) {
+                // console.error("Error uploading file: ", err);
+            } else {
+                // console.log("File uploaded successfully: ", data);
+            }
+        });
+
+    }
+
     public static getInstance(): S3Controller {
 
         if (!S3Controller.instance) {

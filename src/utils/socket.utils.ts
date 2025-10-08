@@ -5,7 +5,8 @@ export default class socketUtils {
         fileContent: "on:file:content",
         dirBaseFile: "on:dir:base-file",
         initialDirPath: "on:dir:initial-path",
-        terminalData: "on:terminal:data"
+        terminalData: "on:terminal:data",
+        initialFileLoadComplete: "on:file:initial-load-complete"
     }
 
     static on = {
