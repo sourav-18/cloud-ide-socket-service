@@ -1,4 +1,5 @@
 import redisConnection from "./connection.db";
+import { SCHEMA_FIELD_TYPE } from "redis";
 import type { RedisClientType } from "redis";
 
 class redisFun {
@@ -42,6 +43,16 @@ class redisFun {
     public static async deleteKey(key: string): Promise<boolean> {
         const result = await redisFun.client.del(key)
         return result ? true : false;
+    }
+
+    public static async indexDataSet(key: string, data: any) {
+        const result = await redisFun.client.json.set(key, '$', data);
+        return result ? true : false;
+    }
+
+    public static async indexDataSearch(key: string, field: any) {
+        const result = await redisFun.client.ft.search(key, field,{LIMIT:{from:0,size:200}});
+        return result;
     }
 
 }

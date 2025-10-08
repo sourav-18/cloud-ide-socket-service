@@ -3,4 +3,10 @@ export default class redisKeys {
         user:"user",
         isUserFileExist:"user-file-exits"
     }
+    static index={
+        fileUpdate:"fileUpdate",
+        getKey:(prefix:string,key:string)=>{
+            return prefix+":"+key;
+        }
+    }
 }

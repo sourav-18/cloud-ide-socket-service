@@ -2,6 +2,8 @@ import chokidar from 'chokidar';
 import constantUtils from "../utils/constant.utils";
 import s3Controller from './s3.controller';
 import serverEnv from "../config/serverEnv.config";
+import redisFun from '../db/redis/fun.db';
+import redisKeys from '../db/redis/key.db';
 
 class fileWatchController {
     private static instance: fileWatchController;
@@ -31,11 +33,11 @@ class fileWatchController {
             .on('ready', () => console.log('Initial scan complete. Ready for changes'));
     }
 
-    private handleFileEvent(filePath: string) {
-        console.log("file changed : ", filePath);
-        const workspaces="workspaces";
-        const workspacesChangePath=filePath.slice(filePath.indexOf(workspaces)+workspaces.length);
-        s3Controller.uploadFile(filePath,serverEnv.S3_USER_FOLDER+workspacesChangePath);
+    private async handleFileEvent(filePath: string) {
+        await redisFun.indexDataSet(redisKeys.index.getKey(redisKeys.index.fileUpdate, filePath), { update: 1 })
+        // const workspaces="workspaces";
+        // const workspacesChangePath=filePath.slice(filePath.indexOf(workspaces)+workspaces.length);
+        // s3Controller.uploadFile(filePath,serverEnv.S3_USER_FOLDER+workspacesChangePath);
     }
 
     private handleDirEvent(filePath: string) {
@@ -49,6 +51,8 @@ class fileWatchController {
     private dirUnlink(filePath: string) {
 
     }
+
+    
 }
 
 export default fileWatchController;

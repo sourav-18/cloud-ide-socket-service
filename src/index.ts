@@ -4,7 +4,11 @@ import express, { Request, Response, NextFunction } from "express";
 import { Server } from 'socket.io';
 import SocketServer from "./socketServer";
 import redisConnection from './db/redis/connection.db';
+import schemaInit from './db/redis/schemaInit.db';
+import cronJob from './controllers/cronJob.controller';
 redisConnection.getInstance();
+schemaInit.getInstance();
+cronJob.getInstance();
 
 
 

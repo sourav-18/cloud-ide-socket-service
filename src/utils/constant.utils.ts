@@ -4,13 +4,14 @@ export default class constantUtils {
 
     private static staticKey = {
         rootPath: process.cwd(),
-        userCodeFilePrefix: '/workspaces'
+        userCodeFilePrefix: '/workspaces',
     }
 
     static key = {
+        userCodeDirName: 'workspaces',
         rootPath: constantUtils.staticKey.rootPath,
         userLocalWorkspacePath: constantUtils.staticKey.rootPath + constantUtils.staticKey.userCodeFilePrefix,
         userCodeFilePrefix: constantUtils.staticKey.userCodeFilePrefix,
-        getFullPath:(prefix:string):string=>constantUtils.staticKey.rootPath+prefix
+        getFullPath: (prefix: string): string => constantUtils.staticKey.rootPath + prefix
     }
 }
