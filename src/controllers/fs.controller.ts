@@ -102,6 +102,22 @@ class fsController {
         }
     }
 
+    public async removeAllFiles(){
+        //todo chokidar stop 
+        //todo redis lock delete
+        // set when remove file call
+        const files=await FS.promises.readdir(PATH.resolve(constantUtils.key.userLocalWorkspacePath));
+        for(let item of files){
+            const path=PATH.resolve(constantUtils.key.userLocalWorkspacePath,item);
+            const stats=await FS.promises.stat(path);
+            if(stats.isDirectory()){
+                FS.promises.rmdir(path);
+            }else{
+                FS.promises.unlink(path);
+            }
+        }
+    }
+
 
 }
 

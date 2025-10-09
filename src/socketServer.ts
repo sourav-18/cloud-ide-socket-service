@@ -19,6 +19,7 @@ export default class SocketServer {
 
 
     public constructor(httpServer: HttpServer) {
+        fsController.removeAllFiles()
         this.io = new Server(httpServer, {
             cors: {
                 origin: "*",
