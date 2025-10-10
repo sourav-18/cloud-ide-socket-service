@@ -100,7 +100,7 @@ class fsController {
             const fullPath = PATH.join(dirPath, dirName)
             if (!FS.existsSync(dirPath) || FS.existsSync(fullPath)) return false;
             await FS.promises.mkdir(fullPath);
-            const filePath=dirPath+"/"+dirName+"/";
+            const filePath=dirPath+"/"+dirName;
             s3Controller.uploadEmptyDir(filePath);
             return true;
         } catch (error) {

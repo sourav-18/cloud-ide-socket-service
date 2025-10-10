@@ -37,7 +37,7 @@ class fileWatchController {
     }
 
     private async handleFileEvent(filePath: string) {
-        console.log("enter------------------")
+        // console.log("file update: ",filePath);
         await redisFun.indexDataSet(redisKeys.index.getKey(redisKeys.index.fileUpdate, filePath), { update: 1 })
         // const workspaces="workspaces";
         // const workspacesChangePath=filePath.slice(filePath.indexOf(workspaces)+workspaces.length);
@@ -45,7 +45,7 @@ class fileWatchController {
     }
 
     private handleDirEvent(filePath: string) {
-
+         s3Controller.uploadEmptyDir(filePath);
     }
 
     private fileUnlink(filePath: string) {

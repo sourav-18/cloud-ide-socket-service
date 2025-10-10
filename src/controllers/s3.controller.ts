@@ -113,6 +113,7 @@ class S3Controller {
     }
 
     public uploadEmptyDir(filePath: string) {
+        console.log("uploadEmptyDir: ",filePath);
         const workspaces = constantUtils.key.userCodeDirName;
         let fileS3Path = filePath.slice(filePath.indexOf(workspaces) + workspaces.length);
         fileS3Path = serverEnv.S3_USER_FOLDER + fileS3Path.replaceAll("\\", "/") + '/';

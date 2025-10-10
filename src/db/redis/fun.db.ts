@@ -47,6 +47,7 @@ class redisFun {
 
     public static async indexDataSet(key: string, data: any) {
         const result = await redisFun.client.json.set(key, '$', data);
+        // console.log(result)
         return result ? true : false;
     }
 
