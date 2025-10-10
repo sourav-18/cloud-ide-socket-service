@@ -33,12 +33,33 @@ class S3Controller {
             //Todo here if folder exists in local don't download again
             const response = await this.S3.listObjectsV2({
                 Bucket: bucket,
-                Prefix: prefix
+                Prefix: prefix,
             }).promise();
 
-            if (!response.Contents) return;
 
-            await Promise.all(response.Contents.map(async (item) => {
+
+            if (!response.Contents) return;
+            const dirList = [];
+            const fileList = [];
+
+            for (let item of response.Contents) {
+                if (item.Key?.endsWith('//') || item.Key?.endsWith('/')) {
+                    dirList.push(item);
+                } else {
+                    fileList.push(item);
+                }
+            }
+
+            await Promise.all(dirList.map(async (item) => {
+                const fileKey = item?.Key;
+                if (!fileKey) return;
+                const relativePath = fileKey.replace(prefix, "");
+                if(relativePath.length==0||relativePath==='/')return;
+                const localFilePath = PATH.join(constantUtils.key.userLocalWorkspacePath, relativePath);
+                await this.crateEmptyDirInLocal(localFilePath);
+            }))
+
+            await Promise.all(fileList.map(async (item) => {
                 const fileKey = item.Key;
                 if (!fileKey) return;
 
@@ -48,10 +69,9 @@ class S3Controller {
                 }).promise();
 
                 const relativePath = fileKey.replace(prefix, "");
+                if(relativePath.length==0||relativePath==='/')return;
                 const localFilePath = PATH.join(constantUtils.key.userLocalWorkspacePath, relativePath);
-                let isEmptyDir = await this.crateEmptyDir(localFilePath);
-                if (isEmptyDir === false)
-                    await this.writeFile(localFilePath, objectData.Body as Buffer)
+                await this.writeFile(localFilePath, objectData.Body as Buffer)
             }))
 
         } catch (error) {
@@ -59,19 +79,22 @@ class S3Controller {
         }
     }
 
-    private async crateEmptyDir(dirPath: string): Promise<Boolean> {
-        if (dirPath.endsWith('\\')) {
-            await FS.promises.mkdir(dirPath, { recursive: true });
-            return true;
-        }
-        return false;
+    private async crateEmptyDirInLocal(dirPath: string): Promise<Boolean> {
+        await FS.promises.mkdir(dirPath, { recursive: true });
+        return true;
     }
 
     private async writeFile(filePath: string, fileData: Buffer): Promise<void> {
         await FS.promises.writeFile(filePath, fileData);
+        // try {
+        //     await FS.promises.writeFile(filePath, fileData);
+        // } catch (error:any) {
+        //     console.log("error: ", filePath, error.message)
+        // }
     }
 
     public uploadFile(localFilePath: string, fileS3Path: string) {
+        fileS3Path = fileS3Path.replaceAll("\\", "/")
         const fileContent = FS.createReadStream(localFilePath);
         const params = {
             Bucket: serverEnv.S3_BUCKET_NAME!,
@@ -87,6 +110,24 @@ class S3Controller {
             }
         });
 
+    }
+
+    public uploadEmptyDir(filePath: string) {
+        const workspaces = constantUtils.key.userCodeDirName;
+        let fileS3Path = filePath.slice(filePath.indexOf(workspaces) + workspaces.length);
+        fileS3Path = serverEnv.S3_USER_FOLDER + fileS3Path.replaceAll("\\", "/") + '/';
+        const params = {
+            Bucket: serverEnv.S3_BUCKET_NAME!,
+            Key: fileS3Path, // File name you want to save as in S3
+        };
+
+        this.S3.putObject(params, (err, data) => {
+            if (err) {
+                console.error("Error uploadEmptyDir file: ", err);
+            } else {
+                console.log("File uploaded successfully: ", data);
+            }
+        });
     }
 
     public static getInstance(): S3Controller {

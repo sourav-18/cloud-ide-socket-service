@@ -27,6 +27,7 @@
     "chokidar": "^4.0.3",
     "cron": "^4.3.3",
     "dotenv": "^17.2.1",
+    "expres": "^0.0.5",
     "express": "^5.1.0",
     "redis": "^5.8.3",
     "socket.io": "^4.8.1"

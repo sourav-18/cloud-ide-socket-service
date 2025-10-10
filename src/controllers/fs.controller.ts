@@ -1,6 +1,11 @@
 import PATH from 'path';
 import FS from 'fs';
 import constantUtils from '../utils/constant.utils';
+import s3Controller from './s3.controller';
+import serverEnv from '../config/serverEnv.config';
+import redisFun from '../db/redis/fun.db';
+import redisKeys from '../db/redis/key.db';
+import fileWatchController from './FileWatch.controller';
 
 export interface FileInfo {
     type: "file" | "dir";
@@ -95,6 +100,8 @@ class fsController {
             const fullPath = PATH.join(dirPath, dirName)
             if (!FS.existsSync(dirPath) || FS.existsSync(fullPath)) return false;
             await FS.promises.mkdir(fullPath);
+            const filePath=dirPath+"/"+dirName+"/";
+            s3Controller.uploadEmptyDir(filePath);
             return true;
         } catch (error) {
             console.log(error)
@@ -102,20 +109,19 @@ class fsController {
         }
     }
 
-    public async removeAllFiles(){
-        //todo chokidar stop 
-        //todo redis lock delete
-        // set when remove file call
-        const files=await FS.promises.readdir(PATH.resolve(constantUtils.key.userLocalWorkspacePath));
-        for(let item of files){
-            const path=PATH.resolve(constantUtils.key.userLocalWorkspacePath,item);
-            const stats=await FS.promises.stat(path);
-            if(stats.isDirectory()){
-                FS.promises.rmdir(path);
-            }else{
+    public async removeAllFiles() {
+        fileWatchController.getInstance().stopWatcher();
+        const files = await FS.promises.readdir(PATH.resolve(constantUtils.key.userLocalWorkspacePath));
+        for (let item of files) {
+            const path = PATH.resolve(constantUtils.key.userLocalWorkspacePath, item);
+            const stats = await FS.promises.stat(path);
+            if (stats.isDirectory()) {
+                FS.promises.rm(path,{recursive:true,force:true});
+            } else {
                 FS.promises.unlink(path);
             }
         }
+        redisFun.deleteKey(redisKeys.key.isUserFileExist);
     }
 
 

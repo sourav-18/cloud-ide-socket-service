@@ -19,7 +19,7 @@ export default class SocketServer {
 
 
     public constructor(httpServer: HttpServer) {
-        fsController.removeAllFiles()
+        // fsController.removeAllFiles() //why chokidar not showing rmove file
         this.io = new Server(httpServer, {
             cors: {
                 origin: "*",
@@ -35,12 +35,14 @@ export default class SocketServer {
             console.log('a user connected ', socket.id);
             const isUserFileExist = await redisFun.get(redisKeys.key.isUserFileExist);
             if (!isUserFileExist) {
+                await redisFun.set(redisKeys.key.isUserFileExist, "true");
                 await S3Controller.downloadS3Folder();
-                await redisFun.set(redisKeys.key.isUserFileExist, "true");//todo whenever server disconnect key delete or redis destroy
+                console.log("file download complete")
             }
             FileWatchController.getInstance();
             this.ioHandler(socket);
             socket.on('disconnect', () => {
+                fsController.removeAllFiles() //todo not every disconnect delete file 
                 this.clearTerminals();
                 console.log('user disconnected ', socket.id);
             });

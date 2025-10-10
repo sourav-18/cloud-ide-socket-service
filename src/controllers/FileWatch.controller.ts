@@ -1,4 +1,5 @@
 import chokidar from 'chokidar';
+import type {FSWatcher} from "chokidar";
 import constantUtils from "../utils/constant.utils";
 import s3Controller from './s3.controller';
 import serverEnv from "../config/serverEnv.config";
@@ -7,8 +8,9 @@ import redisKeys from '../db/redis/key.db';
 
 class fileWatchController {
     private static instance: fileWatchController;
+    private chokidar:FSWatcher;
     private constructor() {
-        this.watchFileChanges();
+        this.chokidar=this.watchFileChanges();
     }
 
     public static getInstance(): fileWatchController {
@@ -18,8 +20,8 @@ class fileWatchController {
         return fileWatchController.instance;
     }
 
-    private watchFileChanges() {
-        chokidar.watch(constantUtils.key.userLocalWorkspacePath, {
+    private watchFileChanges():FSWatcher {
+        this.chokidar=chokidar.watch(constantUtils.key.userLocalWorkspacePath, {
             // persistent: true,
             ignoreInitial: true,
             depth: 99
@@ -31,9 +33,11 @@ class fileWatchController {
             .on('unlinkDir', (dirPath) => this.dirUnlink(dirPath))
             .on('error', (error) => console.log(`Watcher error: ${error}`))
             .on('ready', () => console.log('Initial scan complete. Ready for changes'));
+        return this.chokidar;
     }
 
     private async handleFileEvent(filePath: string) {
+        console.log("enter------------------")
         await redisFun.indexDataSet(redisKeys.index.getKey(redisKeys.index.fileUpdate, filePath), { update: 1 })
         // const workspaces="workspaces";
         // const workspacesChangePath=filePath.slice(filePath.indexOf(workspaces)+workspaces.length);
@@ -45,11 +49,15 @@ class fileWatchController {
     }
 
     private fileUnlink(filePath: string) {
-
+        console.log("unlink file: ",filePath)
     }
 
     private dirUnlink(filePath: string) {
+        console.log("unlink dir: ",filePath)
+    }
 
+    public async stopWatcher(){
+        this.chokidar.close();
     }
 
     
